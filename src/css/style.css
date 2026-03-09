@@ -1,0 +1,106 @@
+:root {
+    --bg-dark: #0f172a;
+    --card-bg: #1e293b;
+    --accent-blue: #3b82f6;
+    --text-main: #f8fafc;
+    --go-green: #22c55e;
+    --nogo-red: #ef4444;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.screen { width: 95%; max-width: 800px; text-align: center; padding: 20px; }
+.hidden { display: none !important; }
+
+.card {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #334155;
+}
+
+.rules-container { display: flex; gap: 15px; margin: 20px 0; }
+.rule { flex: 1; padding: 15px; border-radius: 8px; font-size: 0.9rem; }
+.go { border-left: 5px solid var(--go-green); background: #14532d33; }
+.nogo { border-left: 5px solid var(--nogo-red); background: #7f1d1d33; }
+
+.btn-main {
+    background: var(--accent-blue);
+    color: white;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-main:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.btn-opt {
+    background: #334155;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.btn-opt.selected { background: var(--accent-blue); border-color: white; }
+
+.test-mode {
+    background: black;
+    position: fixed;
+    inset: 0;
+    max-width: 100%;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.audio-icon { font-size: 80px; opacity: 0.3; }
+
+/* Grid de Resultados */
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.metric-card {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+    border-bottom: 3px solid var(--accent-blue);
+}
+
+.metric-label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; display: block; }
+.metric-value { font-size: 1.8rem; font-weight: 800; display: block; margin-top: 5px; }
+
+.input-dark {
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    margin-right: 10px;
+}
