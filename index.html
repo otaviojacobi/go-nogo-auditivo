@@ -8,17 +8,26 @@
 </head>
 <body>
     <div id="app-container">
-        <section id="screen-instructions" class="screen">
-            <h1>Go/No-go Auditivo</h1>
+        <section id="screen-audio-test" class="screen">
+            <h3>Teste de Áudio</h3>
+            <p>Clique no botão para ouvir e selecione as 3 palavras ditas:</p>
+            <button id="btn-play-test" class="btn-secondary">▶ Reproduzir Áudio</button>
+            <div id="audio-options" class="options-grid"></div>
+            <p id="audio-test-feedback"></p>
+            <button id="btn-start-instructions" class="btn-main hidden">Tudo certo! Ver instruções</button>
+        </section>
+
+        <section id="screen-instructions" class="screen hidden">
+            <h1>Instruções</h1>
             <div class="card">
                 <h3>Instruções</h3>
                 <p>Neste teste você vai ouvir uma sequência de palavras em áudio. Preste bastante atenção.</p>
                 <div class="rules-container">
                     <div class="rule go">
-                        <strong>GO:</strong> Pressione a <strong>BARRA DE ESPAÇO</strong> o mais rápido possível a cada palavra que escutar.
+                        Pressione a <strong>BARRA DE ESPAÇO</strong> o mais rápido possível a cada palavra que escutar.
                     </div>
                     <div class="rule nogo">
-                        <strong>NO-GO:</strong> Quando ouvir a palavra <strong>"NÃO"</strong>, você <strong>NÃO</strong> deve pressionar nada.
+                        Quando ouvir a palavra <strong>"NÃO"</strong>, você <strong>NÃO</strong> deve pressionar nada.
                     </div>
                 </div>
             </div>
@@ -30,16 +39,7 @@
                     <li><strong>POSIÇÃO:</strong> Mantenha o dedo sobre a barra de espaço.</li>
                 </ul>
             </div>
-            <button class="btn-main" onclick="showScreen('screen-audio-test')">Avançar para Teste de Áudio</button>
-        </section>
-
-        <section id="screen-audio-test" class="screen hidden">
-            <h3>Teste de Áudio</h3>
-            <p>Clique no botão para ouvir e selecione as 3 palavras ditas:</p>
-            <button id="btn-play-test" class="btn-secondary">▶ Reproduzir Áudio</button>
-            <div id="audio-options" class="options-grid"></div>
-            <p id="audio-test-feedback"></p>
-            <button id="btn-start-real-test" class="btn-main hidden">Tudo certo! Iniciar Teste</button>
+            <button class="btn-main" id="btn-start-test">Iniciar Teste (ESPAÇO)</button>
         </section>
 
         <section id="screen-test-area" class="screen hidden test-mode">
@@ -47,14 +47,13 @@
         </section>
 
         <section id="screen-results" class="screen hidden">
-            <h3>Métricas do Teste</h3>
-            <div id="metrics-display" class="results-grid"></div>
-            
-            <div class="card">
-                <p>Quanto tempo (em minutos) você acha que o teste durou?</p>
-                <input type="number" id="estimated-time" class="input-dark" placeholder="Ex: 10">
-                <button class="btn-main" onclick="alert('Dados salvos!')">Finalizar</button>
+            <h2 class="title">Relatório de Performance</h2>
+            <div class="stats-grid" id="metrics-display"></div>
+            <div class="chart-wrapper">
+                <svg id="rt-chart"></svg>
             </div>
+            <div id="detalhes-resultados"></div>
+            <button onclick="location.reload()" class="btn-main" style="margin-top:10px">REINICIAR</button>
         </section>
     </div>
     <script src="src/js/script.js"></script>
