@@ -21,12 +21,13 @@
             <div class="card">
                 <h2>Instruções</h2>
                 <p>Neste teste você vai ouvir uma sequência de palavras em áudio. Preste bastante atenção.</p>
+                <p>Você fará primeiro um <strong>treino</strong> de 20 palavras. Em seguida começa o <strong>teste</strong> com 300 palavras.</p>
                 <div class="rules-container">
                     <div class="rule go">
                         Pressione a <strong>BARRA DE ESPAÇO</strong> o mais rápido possível a cada palavra que escutar.
                     </div>
                     <div class="rule nogo">
-                        Quando ouvir a palavra <strong>"NÃO"</strong>, você <strong>NÃO</strong> deve pressionar nada.
+                        Quando ouvir a palavra <strong>"SIM"</strong>, você <strong>NÃO</strong> deve pressionar nada.
                     </div>
                 </div>
             </div>
@@ -38,7 +39,16 @@
                     <li><strong>POSIÇÃO:</strong> Mantenha o dedo sobre a barra de espaço.</li>
                 </ul>
             </div>
-            <button class="btn-main" id="btn-start-test">Iniciar Teste (ESPAÇO)</button>
+            <button class="btn-main" id="btn-start-test">Iniciar Treino (ESPAÇO)</button>
+        </section>
+
+        <section id="screen-post-trial" class="screen hidden">
+            <div class="card" style="text-align:center">
+                <h2 class="title">Treino Finalizado</h2>
+                <p>Prepare-se para o teste.</p>
+                <p>O botão será liberado em:</p>
+                <button id="btn-start-official" class="btn-main" disabled>AGUARDE</button>
+            </div>
         </section>
 
         <section id="screen-test-area" class="screen hidden test-mode">

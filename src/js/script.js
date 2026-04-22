@@ -1,11 +1,43 @@
-const wordSequence = [
-    "nao", "chao", "dor", "sol", "mar", "cor", "luz", "faz", "lar", "nos",
-    "vem", "pe", "rei", "sou", "pao", "bom", "vou", "nao", "mao", "um",
-    "mal", "nao", "vos", "nao", "nao", "cor", "pe", "nao", "mar", "sou"
+const SEQ_TRIAL = [
+    "luz","mao","pao","sim","chao","sim","pe","mar","rei","sou",
+    "lar","sim","faz","dor","cor","sol","nos","bom","sim","sim"
+];
+
+const SEQ_OFICIAL = [
+    "sim","chao","dor","sol","mar","cor","luz","faz","lar","nos",
+    "vem","pe","rei","sou","pao","bom","vou","sim","mao","um",
+    "mal","sim","vos","sim","sim","cor","pe","sim","mar","sou",
+    "luz","dor","sol","rei","nos","faz","sim","vos","vou","mao",
+    "sim","lar","pao","vem","chao","sim","bom","um","sim","sim",
+    "sim","mao","dor","mar","sol","vou","lar","nos","luz","cor",
+    "faz","sou","pe","pao","sim","chao","rei","bom","sim","sim",
+    "um","sim","sim","vos","vem","sim","sim","sim","vou","luz",
+    "mao","pao","sim","chao","sim","pe","mar","rei","sou","lar",
+    "sim","faz","dor","cor","sol","nos","bom","sim","sim","um",
+    "sim","um","vos","sim","sim","sim","pao","luz","lar","dor",
+    "cor","mar","sol","faz","mao","sim","vou","chao","sim","nos",
+    "bom","sou","pe","sim","vem","sim","rei","sim","um","sim",
+    "sim","sim","pao","vou","luz","dor","mao","lar","cor","sim",
+    "sol","mar","nos","faz","sim","pe","bom","chao","sim","sou",
+    "rei","sim","sim","vem","sim","sim","sim","um","sim","vos",
+    "sim","sim","sim","pao","dor","luz","mao","vou","lar","cor",
+    "sol","mar","faz","nos","sim","pe","bom","sim","chao","sou",
+    "rei","sim","sim","vem","sim","um","vos","sim","sim","sim",
+    "pao","luz","mao","vou","dor","lar","cor","sol","mar","faz",
+    "rei","sim","sim","vem","sim","um","vos","sim","sim","sim",
+    "dor","pao","luz","mao","vou","lar","cor","sol","mar","faz",
+    "nos","sim","pe","bom","sim","chao","sou","sim","rei","sim",
+    "vem","sim","um","sim","vos","sim","sim","sim","dor","pao",
+    "luz","mao","vou","lar","cor","sol","mar","faz","nos","sim",
+    "pe","bom","sim","chao","sou","sim","rei","sim","vem","sim",
+    "um","sim","vos","sim","sim","sim","dor","pao","luz","mao",
+    "vou","lar","cor","sol","mar","faz","nos","sim","pe","bom",
+    "chao","sou","rei","sim","sim","vem","sim","um","sim","vos",
+    "sim","sim","vou","mao","dor","pao","luz","sim","vou","lar"
 ];
 
 const WORD_LABELS = {
-    "nao": "Não", "nos": "Nós", "rei": "Rei", "pe": "Pé",
+    "sim": "Sim", "nao": "Não", "nos": "Nós", "rei": "Rei", "pe": "Pé",
     "chao": "Chão", "faz": "Faz", "luz": "Luz", "dor": "Dor",
     "pao": "Pão", "cor": "Cor", "mar": "Mar", "sol": "Sol",
     "lar": "Lar", "vem": "Vem", "sou": "Sou", "bom": "Bom",
@@ -14,17 +46,29 @@ const WORD_LABELS = {
 };
 
 const INTERVAL_TIME = 1500;
+const TEST_WORDS = ["sim", "pe", "dor"];
 
-let currentIdx = 0;
-let results = [];
-let reactionStartTime = 0;
-let hasResponded = false;
-let testActive = false;
-let presentationWindowOpen = false;
+let state = {
+    currentIdx: 0,
+    results: [],
+    seq: [],
+    isOfficial: false,
+    isRunning: false,
+    lockNavigation: false,
+    reactionStartTime: 0,
+    hasResponded: false,
+    testActive: false,
+    presentationWindowOpen: false,
+    aborted: false
+};
+
 let audioPlayingTest = false;
 let audioPlayed = false;
+let currentAudio = null;
 
-const TEST_WORDS = ["nao", "pe", "dor"];
+const ABORT_CODE = "end42";
+let abortBuffer = "";
+let abortBufferTimer = null;
 
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -32,7 +76,7 @@ function showScreen(id) {
 }
 
 const audioGrid = document.getElementById('audio-options');
-const audioList = ["nao", "nos", "rei", "pe", "chao", "faz", "luz", "dor", "pao", "cor"];
+const audioList = ["sim", "nos", "rei", "pe", "chao", "faz", "luz", "dor", "pao", "cor"];
 
 audioList.forEach(word => {
     const btn = document.createElement('div');
@@ -78,75 +122,170 @@ document.getElementById('btn-start-instructions').onclick = () => {
     showScreen('screen-instructions');
 };
 
-document.getElementById('btn-start-test').onclick = startTest;
+document.getElementById('btn-start-test').onclick = startTrialPhase;
+document.getElementById('btn-start-official').onclick = () => {
+    if (!state.lockNavigation && !state.isRunning) startOfficialPhase();
+};
 
 window.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
-        if (!document.getElementById('screen-instructions').classList.contains('hidden') && !testActive) {
-            e.preventDefault();
-            startTest();
-            return;
-        }
-        if (testActive && !hasResponded && presentationWindowOpen) {
-            e.preventDefault();
-            const rt = Date.now() - reactionStartTime;
-            hasResponded = true;
-            recordData(true, rt);
-        }
+    if (e.code !== 'Space') return;
+
+    if (state.testActive && !state.hasResponded && state.presentationWindowOpen) {
+        e.preventDefault();
+        const rt = Date.now() - state.reactionStartTime;
+        state.hasResponded = true;
+        recordData(true, rt);
+        return;
+    }
+
+    if (state.isRunning) return;
+
+    if (!document.getElementById('screen-instructions').classList.contains('hidden')) {
+        e.preventDefault();
+        startTrialPhase();
+        return;
+    }
+
+    if (!document.getElementById('screen-post-trial').classList.contains('hidden') && !state.lockNavigation) {
+        e.preventDefault();
+        startOfficialPhase();
     }
 });
 
-function startTest() {
+function startTrialPhase() {
+    if (state.isRunning) return;
+    state.seq = SEQ_TRIAL;
+    state.isOfficial = false;
+    state.currentIdx = 0;
+    state.results = [];
+    state.isRunning = true;
+    state.aborted = false;
+    showScreen('screen-test-area');
+    setTimeout(startMainTest, 2000);
+}
+
+function startOfficialPhase() {
+    if (state.isRunning) return;
+    state.seq = SEQ_OFICIAL;
+    state.isOfficial = true;
+    state.currentIdx = 0;
+    state.results = [];
+    state.isRunning = true;
+    state.aborted = false;
     showScreen('screen-test-area');
     setTimeout(startMainTest, 2000);
 }
 
 function startMainTest() {
-    testActive = true;
+    state.testActive = true;
     runTrial();
 }
 
 function runTrial() {
-    if (currentIdx >= wordSequence.length) {
+    if (state.aborted) return;
+    if (state.currentIdx >= state.seq.length) {
         finishTest();
         return;
     }
 
-    const currentWord = wordSequence[currentIdx];
+    const currentWord = state.seq[state.currentIdx];
     const audio = new Audio(`src/audio/${currentWord}.mp3`);
+    currentAudio = audio;
 
-    hasResponded = false;
-    presentationWindowOpen = true;
-    reactionStartTime = Date.now();
+    state.hasResponded = false;
+    state.presentationWindowOpen = true;
+    state.reactionStartTime = Date.now();
 
     audio.play().catch(() => {});
 
-    audio.onended = () => {
-        presentationWindowOpen = false;
-        if (!hasResponded) recordData(false, 0);
-        currentIdx++;
+    const advance = () => {
+        if (state.aborted) return;
+        state.presentationWindowOpen = false;
+        if (!state.hasResponded) recordData(false, 0);
+        state.currentIdx++;
         setTimeout(runTrial, INTERVAL_TIME);
     };
 
-    audio.onerror = () => {
-        presentationWindowOpen = false;
-        if (!hasResponded) recordData(false, 0);
-        currentIdx++;
-        setTimeout(runTrial, INTERVAL_TIME);
-    };
+    audio.onended = advance;
+    audio.onerror = advance;
 }
 
 function recordData(pressed, rt) {
-    const word = wordSequence[currentIdx];
-    const isNoGo = (word === "nao");
+    const word = state.seq[state.currentIdx];
+    const isNoGo = (word === "sim");
     const status = isNoGo ? (pressed ? "E" : "OK") : (pressed ? "A" : "O");
-    results.push({ word, isNoGo, pressed, reactionTime: rt, status });
+    state.results.push({ word, isNoGo, pressed, reactionTime: rt, status });
 }
 
 function finishTest() {
-    testActive = false;
-    showScreen('screen-results');
+    state.testActive = false;
+    state.isRunning = false;
+    currentAudio = null;
 
+    if (state.isOfficial) {
+        showScreen('screen-results');
+        renderResults();
+    } else {
+        startCoolDown();
+    }
+}
+
+function abortTest() {
+    if (!state.isRunning) return;
+    state.aborted = true;
+    state.testActive = false;
+    state.presentationWindowOpen = false;
+    state.isRunning = false;
+    if (currentAudio) {
+        currentAudio.onended = null;
+        currentAudio.onerror = null;
+        try { currentAudio.pause(); } catch (_) {}
+        currentAudio = null;
+    }
+    if (!state.results.length) {
+        location.reload();
+        return;
+    }
+    showScreen('screen-results');
+    renderResults();
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.key.length !== 1 || !/[a-z0-9]/i.test(e.key)) return;
+    abortBuffer = (abortBuffer + e.key.toLowerCase()).slice(-ABORT_CODE.length);
+    clearTimeout(abortBufferTimer);
+    abortBufferTimer = setTimeout(() => { abortBuffer = ""; }, 2000);
+    if (abortBuffer === ABORT_CODE) {
+        abortBuffer = "";
+        abortTest();
+    }
+});
+
+function startCoolDown() {
+    state.lockNavigation = true;
+    showScreen('screen-post-trial');
+
+    const btnOfficial = document.getElementById('btn-start-official');
+    let timer = 10;
+    btnOfficial.disabled = true;
+    btnOfficial.style.opacity = "0.5";
+    btnOfficial.innerText = `AGUARDE (${timer}s)`;
+
+    const countdown = setInterval(() => {
+        timer--;
+        btnOfficial.innerText = `AGUARDE (${timer}s)`;
+        if (timer <= 0) {
+            clearInterval(countdown);
+            state.lockNavigation = false;
+            btnOfficial.disabled = false;
+            btnOfficial.style.opacity = "1";
+            btnOfficial.innerText = "ESPAÇO";
+        }
+    }, 1000);
+}
+
+function renderResults() {
+    const results = state.results;
     const hits = results.filter(r => r.status === "A");
     const avg = hits.length ? (hits.reduce((s, r) => s + r.reactionTime, 0) / hits.length).toFixed(0) : 0;
     const omissions = results.filter(r => r.status === "O").length;
@@ -181,6 +320,7 @@ function drawChart() {
     svg.innerHTML = '';
     const padL = 40, padB = 25, chartH = h - 50, chartW = w - 55;
     let points = [];
+    const results = state.results;
     results.forEach((r, i) => {
         const x = padL + (i * (chartW / (results.length - 1 || 1)));
         let y, color;
@@ -205,7 +345,7 @@ function drawChart() {
 }
 
 function renderDetails() {
-    const rows = results.map((r, i) => {
+    const rows = state.results.map((r, i) => {
         const label = WORD_LABELS[r.word] || r.word;
         const statusLabel = { A: 'Acerto', O: 'Erro de omissão', E: 'Erro de ação', OK: 'Correto' }[r.status];
         const color = { A: '#22c55e', O: '#facc15', E: '#ef4444', OK: '#94a3b8' }[r.status];
