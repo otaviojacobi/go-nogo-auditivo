@@ -22,6 +22,9 @@ let hasResponded = false;
 let testActive = false;
 let presentationWindowOpen = false;
 let audioPlayingTest = false;
+let audioPlayed = false;
+
+const TEST_WORDS = ["nao", "pe", "dor"];
 
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -34,10 +37,22 @@ const audioList = ["nao", "nos", "rei", "pe", "chao", "faz", "luz", "dor", "pao"
 audioList.forEach(word => {
     const btn = document.createElement('div');
     btn.className = 'btn-opt';
+    btn.dataset.word = word;
     btn.innerText = WORD_LABELS[word] || word;
-    btn.onclick = () => btn.classList.toggle('selected');
+    btn.onclick = () => {
+        btn.classList.toggle('selected');
+        checkAudioSelection();
+    };
     audioGrid.appendChild(btn);
 });
+
+function checkAudioSelection() {
+    const selected = new Set(
+        [...document.querySelectorAll('#audio-options .btn-opt.selected')].map(b => b.dataset.word)
+    );
+    const correct = TEST_WORDS.length === selected.size && TEST_WORDS.every(w => selected.has(w));
+    document.getElementById('btn-start-instructions').classList.toggle('hidden', !(audioPlayed && correct));
+}
 
 function playSequentially(sounds, idx, onDone) {
     if (idx >= sounds.length) { onDone(); return; }
@@ -51,10 +66,11 @@ document.getElementById('btn-play-test').onclick = () => {
     if (audioPlayingTest) return;
     audioPlayingTest = true;
     document.getElementById('btn-play-test').disabled = true;
-    playSequentially(["nao", "pe", "dor"], 0, () => {
+    playSequentially(TEST_WORDS, 0, () => {
         audioPlayingTest = false;
         document.getElementById('btn-play-test').disabled = false;
-        document.getElementById('btn-start-instructions').classList.remove('hidden');
+        audioPlayed = true;
+        checkAudioSelection();
     });
 };
 
@@ -136,11 +152,17 @@ function finishTest() {
     const omissions = results.filter(r => r.status === "O").length;
     const falseAlarms = results.filter(r => r.status === "E").length;
 
+    const half = Math.floor(results.length / 2);
+    const errorsFirst = results.slice(0, half).filter(r => r.status === "O" || r.status === "E").length;
+    const errorsSecond = results.slice(half).filter(r => r.status === "O" || r.status === "E").length;
+    const vigilanceDecline = errorsSecond - errorsFirst;
+
     document.getElementById('metrics-display').innerHTML = [
         { label: "Acertos", val: hits.length },
         { label: "Média RT", val: avg + ' ms' },
-        { label: "Omissões", val: omissions },
-        { label: "Falsos Alarmes", val: falseAlarms }
+        { label: "Erro de omissão", val: omissions },
+        { label: "Erro de ação", val: falseAlarms },
+        { label: "Decréscimo da Vigilância", val: vigilanceDecline }
     ].map(m => `
         <div class="card">
             <span class="card-label">${m.label}</span>
@@ -185,7 +207,7 @@ function drawChart() {
 function renderDetails() {
     const rows = results.map((r, i) => {
         const label = WORD_LABELS[r.word] || r.word;
-        const statusLabel = { A: 'Acerto', O: 'Omissão', E: 'Falso Alarme', OK: 'Correto' }[r.status];
+        const statusLabel = { A: 'Acerto', O: 'Erro de omissão', E: 'Erro de ação', OK: 'Correto' }[r.status];
         const color = { A: '#22c55e', O: '#facc15', E: '#ef4444', OK: '#94a3b8' }[r.status];
         return `<tr>
             <td>${i + 1}</td>

@@ -2,6 +2,7 @@
     --bg-dark: #0f172a;
     --card-bg: #1e293b;
     --accent-blue: #3b82f6;
+    --accent-cyan: #22d3ee;
     --text-main: #f8fafc;
     --go-green: #22c55e;
     --nogo-red: #ef4444;
@@ -28,6 +29,13 @@ body {
     margin-bottom: 20px;
     border: 1px solid #334155;
 }
+
+.card h2 { font-size: 1.4rem; font-weight: 700; margin: 0 0 12px 0; }
+.important-card h2 { color: var(--accent-cyan); }
+.card p { margin: 0; }
+
+.info-list { list-style: none; font-size: 0.9rem; padding: 0; margin: 0; }
+.info-list li { margin-bottom: 8px; }
 
 .rules-container { display: flex; gap: 15px; margin: 20px 0; }
 .rule { flex: 1; padding: 15px; border-radius: 8px; font-size: 0.9rem; }
