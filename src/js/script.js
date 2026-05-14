@@ -283,7 +283,7 @@ function startCoolDown() {
 }
 
 function downloadCSV() {
-    const header = ['indice', 'palavra', 'tipo', 'pressionou', 'tempo_reacao_ms', 'status'];
+    const fields = ['indice', 'palavra', 'tipo', 'pressionou', 'tempo_reacao_ms', 'status'];
     const rows = state.results.map((r, i) => [
         i + 1,
         r.word,
@@ -292,7 +292,9 @@ function downloadCSV() {
         r.reactionTime,
         r.status
     ]);
-    const csv = [header, ...rows].map(row => row.join(',')).join('\n');
+    const headerRow = ['campo', ...rows.map((_, i) => i + 1)];
+    const fieldRows = fields.map((field, fi) => [field, ...rows.map(row => row[fi])]);
+    const csv = [headerRow, ...fieldRows].map(row => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
